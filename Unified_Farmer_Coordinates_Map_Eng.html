@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unified Farmer Coordinates Map</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
+
+<style>
+  :root{
+    --clay: #7a5230;
+    --wheat: #d9a441;
+    --wheat-dark: #b3822e;
+    --olive: #4c6b3f;
+    --olive-dark: #375029;
+    --cream: #faf6ee;
+    --paper: #fffdf8;
+    --ink: #2c2620;
+    --ink-soft: #6e6558;
+    --line: #e6ddc9;
+    --whatsapp: #2fae60;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;height:100%;
+    font-family:Arial, 'Segoe UI', sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+  }
+  #app{
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+    height:100dvh;
+  }
+
+  /* ===== Header ===== */
+  header{
+    background:linear-gradient(120deg, var(--olive-dark) 0%, var(--olive) 55%, #5a7a49 100%);
+    color:#fbf6e8;
+    padding:14px 92px 12px;
+    box-shadow:0 3px 10px rgba(0,0,0,.15);
+    position:relative;
+    z-index:20;
+    flex-shrink:0;
+  }
+  header::after{
+    content:"";
+    position:absolute;left:0;right:0;bottom:0;height:4px;
+    background:repeating-linear-gradient(90deg, var(--wheat) 0 14px, var(--wheat-dark) 14px 28px);
+  }
+  .brand-logo{
+    position:absolute;
+    top:10px;
+    height:52px;
+    width:auto;
+    z-index:30;
+    background:#fff;
+    padding:3px;
+    border-radius:8px;
+    box-shadow:0 2px 8px rgba(0,0,0,.25);
+  }
+  .brand-logo-left{ right:16px; }
+  .brand-logo-right{ left:16px; }
+  .head-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .title-block h1{
+    margin:0;
+    font-family:Arial, 'Segoe UI', sans-serif;
+    font-weight:800;
+    font-size:1.35rem;
+    letter-spacing:.2px;
+  }
+  .title-block p{
+    margin:4px 0 0;
+    font-size:.82rem;
+    color:#e6e0c8;
+    opacity:.92;
+  }
+  .title-block p.subtitle-main{
+    margin-top:6px;
+    font-size:.88rem;
+    font-weight:600;
+    color:#fdf7e6;
+    opacity:1;
+  }
+  .head-stats{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .stat-pill{
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.28);
+    border-radius:999px;
+    padding:6px 14px;
+    font-size:.78rem;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    white-space:nowrap;
+  }
+  .stat-pill b{ font-family:'Cairo',sans-serif; font-size:.92rem; }
+
+  .head-tools{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .search-box{
+    position:relative;
+  }
+  .search-box input{
+    font-family:'Tajawal',sans-serif;
+    padding:8px 34px 8px 12px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,.35);
+    background:rgba(255,255,255,.14);
+    color:#fff;
+    font-size:.82rem;
+    width:190px;
+    outline:none;
+    transition:.15s;
+  }
+  .search-box input::placeholder{ color:#e9e4cf; }
+  .search-box input:focus{ background:rgba(255,255,255,.22); border-color:#fff; }
+  .search-box svg{
+    position:absolute; left:10px; top:50%; transform:translateY(-50%);
+    width:14px;height:14px; opacity:.8;
+  }
+
+  select#groupFilter{
+    font-family:'Tajawal',sans-serif;
+    padding:8px 10px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,.35);
+    background:rgba(255,255,255,.14);
+    color:#fff;
+    font-size:.8rem;
+    max-width:170px;
+  }
+  select#groupFilter option{ color:#222; }
+
+  .btn{
+    font-family:'Tajawal',sans-serif;
+    font-weight:700;
+    font-size:.8rem;
+    border:none;
+    border-radius:8px;
+    padding:9px 14px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    transition:transform .12s, box-shadow .12s, background .15s;
+  }
+  .btn-upload{
+    background:var(--wheat);
+    color:#3a2a0e;
+    box-shadow:0 2px 0 var(--wheat-dark);
+  }
+  .btn-upload:hover{ transform:translateY(-1px); box-shadow:0 3px 6px rgba(0,0,0,.25); }
+  .btn-upload:active{ transform:translateY(1px); box-shadow:0 1px 0 var(--wheat-dark); }
+  .btn-upload svg{ width:15px;height:15px; }
+  #fileInput{ display:none; }
+
+  /* ===== Tabs ===== */
+  .tab-bar{
+    display:flex; gap:6px; padding:8px 22px 0;
+    background:var(--paper);
+    border-bottom:1px solid var(--line);
+    flex-shrink:0;
+    position:relative; z-index:12;
+  }
+  .tab-btn{
+    font-family:'Tajawal',sans-serif; font-weight:700; font-size:.85rem;
+    display:flex; align-items:center; gap:7px;
+    padding:9px 18px; border:none; background:transparent; cursor:pointer;
+    color:var(--ink-soft);
+    border-radius:8px 8px 0 0;
+    border-bottom:3px solid transparent;
+    transition:.15s;
+  }
+  .tab-btn svg{ width:15px;height:15px; }
+  .tab-btn:hover{ color:var(--ink); background:var(--cream); }
+  .tab-btn.active{ color:var(--olive-dark); border-bottom-color:var(--wheat); background:var(--cream); }
+
+  .hidden-view{ display:none !important; }
+
+  /* ===== Charts view ===== */
+  #chartsWrap{
+    flex:1; min-height:0; overflow-y:auto;
+    background:var(--cream);
+    padding:20px 22px 30px;
+  }
+  .charts-empty{
+    height:100%; display:flex; align-items:center; justify-content:center;
+    color:var(--ink-soft); font-size:.95rem;
+  }
+  .kpi-row{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(170px,1fr));
+    gap:12px; margin-bottom:18px;
+  }
+  .kpi-card{
+    background:var(--paper); border:1px solid var(--line); border-radius:12px;
+    padding:14px 16px; box-shadow:0 2px 8px rgba(44,38,32,.06);
+    position:relative; overflow:hidden;
+  }
+  .kpi-card::before{
+    content:""; position:absolute; top:0; right:0; bottom:0; width:4px;
+    background:var(--wheat);
+  }
+  .kpi-card.olive::before{ background:var(--olive); }
+  .kpi-card .kpi-label{ font-size:.76rem; color:var(--ink-soft); margin-bottom:4px; }
+  .kpi-card .kpi-value{ font-family:'Cairo',sans-serif; font-weight:800; font-size:1.5rem; color:var(--olive-dark); }
+  .kpi-card .kpi-sub{ font-size:.72rem; color:var(--ink-soft); margin-top:2px; }
+
+  .charts-grid{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(360px,1fr));
+    gap:16px;
+  }
+  .chart-card{
+    background:var(--paper); border:1px solid var(--line); border-radius:14px;
+    padding:16px 18px 12px;
+    box-shadow:0 2px 10px rgba(44,38,32,.08);
+  }
+  .chart-card h3{
+    margin:0 0 12px; font-family:'Cairo',sans-serif; font-size:.92rem; color:var(--olive-dark);
+    border-bottom:1px solid var(--line); padding-bottom:8px;
+  }
+  .chart-holder{ position:relative; height:400px; }
+
+  @media (max-width:720px){
+    .tab-bar{ padding:8px 12px 0; }
+    #chartsWrap{ padding:16px 12px 24px; }
+    .chart-holder{ height:340px; }
+  }
+
+  /* ===== Map ===== */
+  #mapWrap{ position:relative; flex:1; min-height:0; z-index:0; }
+  #map{ position:absolute; inset:0; z-index:1; }
+
+  /* push the layer control lower & style it */
+  .leaflet-top.leaflet-left .leaflet-control-layers{
+    margin-top:64px;
+  }
+  .leaflet-control-layers{
+    border-radius:10px !important;
+    box-shadow:0 4px 14px rgba(44,38,32,.22) !important;
+    border:1px solid var(--line) !important;
+    font-family:'Tajawal',sans-serif;
+  }
+  .leaflet-control-layers-toggle{
+    border-radius:10px !important;
+  }
+  .leaflet-control-layers label{ font-size:.85rem; padding:2px 0; }
+  .leaflet-control-zoom a{
+    border-radius:8px !important;
+  }
+  .leaflet-bar{ box-shadow:0 4px 14px rgba(44,38,32,.22) !important; border:none !important; }
+
+  .leaflet-popup-content-wrapper{
+    border-radius:12px;
+    font-family:'Tajawal',sans-serif;
+    box-shadow:0 8px 24px rgba(44,38,32,.28);
+  }
+  .leaflet-popup-tip{ box-shadow:0 4px 10px rgba(44,38,32,.15); }
+  .popup-card{ direction:ltr; min-width:210px; }
+  .popup-card h3{
+    margin:0 0 6px; font-family:'Cairo',sans-serif; font-size:1rem; color:var(--olive-dark);
+    border-bottom:2px solid var(--line); padding-bottom:6px;
+  }
+  .popup-row{ display:flex; justify-content:space-between; gap:10px; font-size:.82rem; padding:2px 0; }
+  .popup-row span:first-child{ color:var(--ink-soft); }
+  .popup-row span:last-child{ font-weight:600; text-align:left; }
+  .popup-badge{
+    display:inline-block; margin-top:6px; background:var(--olive); color:#fff;
+    font-size:.72rem; padding:3px 9px; border-radius:999px;
+  }
+
+  .marker-pin{
+    width:16px;height:16px;border-radius:50% 50% 50% 0;
+    transform:rotate(-45deg);
+    box-shadow:0 1px 4px rgba(0,0,0,.4);
+    border:2px solid #fff;
+  }
+
+  /* legend */
+  .map-legend{
+    position:absolute; z-index:25; bottom:16px; right:12px;
+    background:rgba(255,253,248,.95);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px 12px;
+    font-size:.75rem;
+    max-width:180px;
+    box-shadow:0 4px 14px rgba(44,38,32,.18);
+    backdrop-filter:blur(2px);
+  }
+  .map-legend h4{ margin:0 0 6px; font-family:'Cairo',sans-serif; font-size:.78rem; color:var(--olive-dark); }
+  .legend-item{ display:flex; align-items:center; gap:6px; padding:2px 0; }
+  .legend-dot{ width:11px;height:11px;border-radius:50%; border:1.5px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.25); flex-shrink:0; }
+
+  /* toast for upload feedback */
+  /* ===== Start overlay (upload prompt) ===== */
+  #startOverlay{
+    position:fixed; inset:0; z-index:100;
+    background-color: rgba(76,107,63,0.90);
+    background-image:
+linear-gradient(160deg, rgba(55,80,41,0) 0%, rgba(76,107,63,0) 55%, rgba(90,122,73,0) 100%),
+    url("images/Logo_Climate.jpg");
+    background-size: 100% 100%, 100% 100%;
+    background-position: center, center;
+    background-repeat: no-repeat, no-repeat;
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+  }
+  #startOverlay.hidden{ display:none; }
+  .start-card{
+    background:rgba(255,253,248,0.85);
+    border-radius:16px;
+    max-width:440px;
+    width:100%;
+    padding:30px 28px 26px;
+    text-align:center;
+    box-shadow:0 18px 50px rgba(0,0,0,.05);
+    border:1px solid var(--line);
+    position:relative;
+  }
+  .start-card::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:5px; border-radius:16px 16px 0 0;
+    background:repeating-linear-gradient(90deg, var(--wheat) 0 14px, var(--wheat-dark) 14px 28px);
+  }
+  .start-icon{
+    width:56px;height:56px;border-radius:50%;
+    background:linear-gradient(135deg, var(--olive), var(--olive-dark));
+    color:#fbf6e8;
+    display:flex;align-items:center;justify-content:center;
+    margin:6px auto 14px;
+  }
+  .start-icon svg{ width:28px;height:28px; }
+  .start-card h2{
+    margin:0 0 8px; font-family:'Cairo',sans-serif; font-weight:800; font-size:1.15rem; color:var(--olive-dark);
+  }
+  .start-sub{ margin:0 0 14px; font-size:.85rem; color:var(--ink); font-weight:600; line-height:1.5; }
+  .start-hint{ margin:0 0 18px; font-size:.8rem; color:var(--ink-soft); line-height:1.6; }
+  .start-btn{ font-size:.88rem; padding:11px 22px; margin:0 auto; }
+  #startFileInput{ display:none; }
+  .start-error{
+    margin:14px 0 0; font-size:.78rem; color:#8a3324; min-height:1em; font-weight:700;
+  }
+
+  #toast{
+    position:absolute; z-index:40; top:14px; left:50%; transform:translateX(-50%) translateY(-30px);
+    background:var(--olive-dark); color:#fff; padding:10px 18px; border-radius:10px;
+    font-size:.85rem; box-shadow:0 6px 18px rgba(0,0,0,.3);
+    opacity:0; transition:opacity .25s, transform .25s;
+    pointer-events:none; text-align:center; max-width:80%;
+  }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  #toast.error{ background:#8a3324; }
+
+  /* ===== Footer ===== */
+  footer{
+    flex-shrink:0;
+    background:var(--paper);
+    border-top:1px solid var(--line);
+    padding:8px 22px 9px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    position:relative;
+    z-index:20;
+  }
+  .footer-contact-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:26px;
+    flex-wrap:wrap;
+  }
+  footer::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:3px;
+    background:repeating-linear-gradient(90deg, var(--wheat) 0 12px, transparent 12px 24px);
+  }
+  .author-line{
+    display:flex; align-items:center; gap:8px; font-size:.62rem; color:var(--clay);
+  }
+  .author-avatar{
+    width:26px;height:26px;border-radius:50%;
+    background:linear-gradient(135deg, var(--wheat-dark), var(--clay));
+    display:flex;align-items:center;justify-content:center;
+    color:#fff; flex-shrink:0;
+  }
+  .author-avatar svg{ width:14px;height:14px; }
+  .author-name{ font-weight:700; font-family:'Cairo',sans-serif; color:var(--clay); }
+  .contact-link{
+    display:flex; align-items:center; gap:6px;
+    font-size:.82rem; color:var(--clay); text-decoration:none;
+    padding:4px 10px; border-radius:999px;
+    border:1px solid var(--line);
+    transition:.15s;
+  }
+  .contact-link:hover{ background:var(--cream); border-color:var(--wheat); color:var(--clay); }
+  .contact-link.mail svg{ color:var(--wheat-dark); }
+  .contact-link.wa svg{ color:var(--whatsapp); }
+  .contact-link svg{ width:15px;height:15px; }
+  .foot-sep{ width:1px; height:16px; background:var(--line); }
+
+  @media (max-width:720px){
+    .head-row{ flex-direction:column; align-items:stretch; }
+    .head-tools{ justify-content:space-between; }
+    .search-box input{ width:100%; }
+    footer{ gap:4px; padding:10px 12px; text-align:center; }
+    .footer-contact-row{ gap:8px; row-gap:4px; }
+    .foot-sep{ display:none; }
+    header{ padding:12px 58px 12px; }
+    .brand-logo{ height:36px; top:8px; }
+    .brand-logo-left{ left:8px; }
+    .brand-logo-right{ right:8px; }
+  }
+
+  /* ===== Footer credit lines ===== */
+  .footer-credit,
+  .footer-direction{
+    width:100%;
+    text-align:center;
+    font-size:.42;
+    font-weight:500;
+    color:var(--ink-soft);
+    font-family:Arial, 'Segoe UI', sans-serif;
+    line-height:1.5;
+  }
+  .footer-direction{
+    font-weight:500;
+    color:var(--olive-dark);
+  }
+
+  /* ===== FOOTER : TOUT LE TEXTE MEME TAILLE ET EN GRAS ===== */
+  footer .author-line,
+  footer .author-name,
+  footer .contact-link,
+  footer .footer-credit,
+  footer .footer-direction,
+  footer .author-line *,
+  footer .author-name *,
+  footer .contact-link *,
+  footer .footer-credit *,
+  footer .footer-direction *{
+    font-size:10px !important;
+    font-weight:700 !important;
+    font-family:'Cairo', sans-serif !important;
+  }
+
+  /* Les icones conservent leur taille propre */
+  footer svg{
+    font-size:initial !important;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="startOverlay">
+    <div class="start-card">
+      <div class="start-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9.5 13.5l1.7 1.7 3.3-3.3"/></svg>
+      </div>
+      <h2>🌾 Unified Farmer Coordinates Map</h2>
+      <p class="start-sub">Unified compilation of coordinates for farmers involved in phosphorus and soil fertility analysis — Republic of Tunisia</p>
+      <p class="start-hint">Please select an Excel file (with the same structure as the original file — "Data" sheet) to display the points on the map.</p>
+      <label class="btn btn-upload start-btn" for="startFileInput">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Select Excel File
+      </label>
+      <input type="file" id="startFileInput" accept=".xlsx,.xls">
+      <p class="start-error" id="startError"></p>
+    </div>
+  </div>
+
+
+  <header>
+    <img class="brand-logo brand-logo-left"
+     src="images/Geo.jpg">
+    <img class="brand-logo brand-logo-right"
+    src="images/Tun_Flag.jpg">
+    <div class="head-row">
+      <div class="title-block">
+        <h1>🌾 Unified Farmer Coordinates Map</h1>
+        <p class="subtitle-main">Unified compilation of coordinates for farmers involved in phosphorus and soil fertility analysis — Republic of Tunisia</p>
+        <p> · 2026/2027 season data · Unified coordinates according to WGS84</p>
+      </div>
+      <div class="head-stats" id="headStats"></div>
+    </div>
+    <div class="head-row" style="margin-top:10px;">
+      <div class="head-tools">
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="Search for a farmer or location...">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <select id="groupFilter"><option value="">All groups</option></select>
+      </div>
+      <div class="head-tools">
+        <label class="btn btn-upload" for="fileInput">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Update data from Excel file
+        </label>
+        <input type="file" id="fileInput" accept=".xlsx,.xls">
+      </div>
+    </div>
+  </header>
+
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="mapWrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4z"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      Map
+    </button>
+    <button class="tab-btn" data-tab="chartsWrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+      Charts
+    </button>
+  </nav>
+
+  <div id="mapWrap">
+    <div id="map"></div>
+    <div class="map-legend" id="mapLegend">
+      <h4>Groups/Delegations</h4>
+      <div id="legendItems"></div>
+    </div>
+    <div id="toast"></div>
+  </div>
+
+  <div id="chartsWrap" class="hidden-view">
+    <div id="chartsEmpty" class="charts-empty">
+      <p>No data yet — please upload an Excel file.</p>
+    </div>
+    <div id="chartsContent" class="charts-content hidden-view">
+      <div class="kpi-row" id="kpiRow"></div>
+      <p id="areaNote" style="font-size:.78rem;color:var(--ink-soft);margin:-8px 2px 18px;"></p>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3>Number of points by group/delegation</h3>
+          <div class="chart-holder"><canvas id="chartCount"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Total area (ha) by group/delegation</h3>
+          <div class="chart-holder"><canvas id="chartArea"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Point distribution by group (%)</h3>
+          <div class="chart-holder"><canvas id="chartPie"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Average area per point (ha) by group</h3>
+          <div class="chart-holder"><canvas id="chartAvgArea"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-contact-row">
+      <div class="author-line">
+        <span class="author-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </span>
+        <span>Developed by: <span class="author-name" style="color:#1565c0;">Mounir Sellami</span></span>
+      </div>
+      <div class="foot-sep"></div>
+      <a class="contact-link mail" href="mailto:mounir_sellami@yahoo.fr">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6l-10 7L2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>
+        Email: <span dir="ltr">mounir_sellami@yahoo.fr</span>
+      </a>
+      <a class="contact-link wa" href="https://wa.me/21622723486" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.44 1.32 4.94L2 22l5.29-1.39a9.87 9.87 0 0 0 4.75 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.03c-.24.68-1.4 1.3-1.93 1.38-.49.08-1.11.11-1.79-.11-.41-.13-.94-.3-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.55-1.16-2.95 0-1.4.73-2.09.99-2.37.26-.28.57-.35.76-.35.19 0 .38 0 .55.01.18.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.09.19-.14.31-.28.47-.14.16-.29.36-.42.48-.14.14-.28.29-.12.57.16.28.71 1.17 1.52 1.9 1.05.94 1.93 1.23 2.21 1.37.28.14.44.12.6-.07.16-.19.68-.79.86-1.06.18-.28.36-.23.6-.14.24.09 1.55.73 1.82.86.27.14.45.21.51.32.07.12.07.68-.17 1.36z"/></svg>
+        WhatsApp: <span dir="ltr">+216 22 723 486</span>
+      </a>
+    </div>
+  </footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+<script>
+(function(){
+  "use strict";
+
+  const REQUIRED_HEADER = [
+    "Serial Number","Source File","Group/Delegation","Sample/Reference No.",
+    "Farmer Name","Location / Plot","Sample Code"," Latitude (WGS84)",
+    " Longitude (WGS84)","Original Coordinate System","Original Coordinates (as provided)",
+    "Area (ha)","Previous Crop","Phone","Notes"
+  ];
+  const SHEET_NAME = "Data";
+
+  let map, cluster, allMarkers = [], currentData = [];
+  const colorCache = {};
+  const PALETTE = ["#4c6b3f","#b3822e","#7a5230","#2b6e7a","#8a3f6e","#4f6ea8","#a0522d","#3f8a5a","#c0392b","#6b4f8a","#2f8f7a","#a67c00"];
+
+  function colorFor(group){
+    const key = group || "Not specified";
+    if(colorCache[key]) return colorCache[key];
+    const idx = Object.keys(colorCache).length % PALETTE.length;
+    colorCache[key] = PALETTE[idx];
+    return colorCache[key];
+  }
+
+  function showToast(msg, isError){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'show' + (isError ? ' error' : '');
+    clearTimeout(showToast._tm);
+    showToast._tm = setTimeout(()=>{ t.className=''; }, 3800);
+  }
+
+  function initMap(){
+    map = L.map('map', { zoomControl:true, minZoom:5 }).setView([35.0, 9.5], 7);
+
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors', maxZoom: 19
+    });
+    const relief = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenTopoMap (CC-BY-SA)', maxZoom: 17
+    });
+    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri', maxZoom: 19
+    });
+    const clair = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO', maxZoom: 19
+    });
+
+    satellite.addTo(map);
+
+    map.attributionControl.setPosition('bottomleft');
+
+    L.control.layers({
+      "OpenStreetMap": osm,
+      "Relief (OpenTopoMap)": relief,
+      "Satellite (Esri)": satellite,
+      "Light base map": clair
+    }, null, { position:'topleft', collapsed:true }).addTo(map);
+
+    cluster = L.markerClusterGroup({
+      maxClusterRadius: 45,
+      spiderfyOnMaxZoom: true,
+      iconCreateFunction: function(c){
+        const n = c.getChildCount();
+        const size = n < 10 ? 34 : n < 30 ? 40 : 48;
+        return L.divIcon({
+          html: '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #6d8a5c, #375029);display:flex;align-items:center;justify-content:center;color:#fbf6e8;font-family:Cairo,sans-serif;font-weight:800;font-size:'+(n<10?13:14)+'px;box-shadow:0 3px 8px rgba(0,0,0,.35);border:2px solid #fff;">'+n+'</div>',
+          className:'', iconSize:[size,size]
+        });
+      }
+    });
+    map.addLayer(cluster);
+  }
+
+  function makeIcon(color){
+    return L.divIcon({
+      className:'',
+      html:'<div class="marker-pin" style="background:'+color+';"></div>',
+      iconSize:[16,16], iconAnchor:[8,15], popupAnchor:[0,-14]
+    });
+  }
+
+  function fmt(v){
+    if(v===null || v===undefined || v==='') return '—';
+    return v;
+  }
+
+  function buildPopup(d){
+    return '<div class="popup-card">'
+      + '<h3>'+fmt(d.farmer)+'</h3>'
+      + '<div class="popup-row"><span>Location / Plot</span><span>'+fmt(d.place)+'</span></div>'
+      + '<div class="popup-row"><span>Group/Delegation</span><span>'+fmt(d.group)+'</span></div>'
+      + '<div class="popup-row"><span>Area (ha)</span><span>'+fmt(d.area)+'</span></div>'
+      + '<div class="popup-row"><span>Previous Crop</span><span>'+fmt(d.crop)+'</span></div>'
+      + '<div class="popup-row"><span>Phone</span><span>'+fmt(d.phone)+'</span></div>'
+      + '<div class="popup-row"><span>Sample Code</span><span>'+fmt(d.code)+'</span></div>'
+      + '<div class="popup-row"><span>Coordinates</span><span>'+ (typeof d.lat==='number'? d.lat.toFixed(5):'—') +', '+ (typeof d.lon==='number'? d.lon.toFixed(5):'—') +'</span></div>'
+      + (d.notes ? '<div class="popup-row"><span>Notes</span><span>'+fmt(d.notes)+'</span></div>' : '')
+      + '<span class="popup-badge">#'+fmt(d.id)+' — '+fmt(d.source)+'</span>'
+      + '</div>';
+  }
+
+  function renderMarkers(data){
+    cluster.clearLayers();
+    allMarkers = [];
+    let validCount = 0;
+
+    data.forEach(d=>{
+      if(typeof d.lat !== 'number' || typeof d.lon !== 'number' || isNaN(d.lat) || isNaN(d.lon)) return;
+      validCount++;
+      const marker = L.marker([d.lat, d.lon], { icon: makeIcon(colorFor(d.group)) });
+      marker.bindPopup(buildPopup(d));
+      marker._meta = d;
+      allMarkers.push(marker);
+      cluster.addLayer(marker);
+    });
+
+    updateStats(data.length, validCount);
+    updateLegend(data);
+    updateGroupFilter(data);
+    return validCount;
+  }
+
+  function updateStats(total, valid){
+    const el = document.getElementById('headStats');
+    el.innerHTML =
+      '<div class="stat-pill">Total points: <b>'+total+'</b></div>'
+      + '<div class="stat-pill">Valid coordinates: <b>'+valid+'</b></div>'
+      + '<div class="stat-pill">Needs review: <b>'+(total-valid)+'</b></div>';
+  }
+
+  function updateLegend(data){
+    const groups = {};
+    data.forEach(d=>{ const g = d.group || 'Not specified'; groups[g] = (groups[g]||0)+1; });
+    const sorted = Object.entries(groups).sort((a,b)=> b[1]-a[1]).slice(0,10);
+    const el = document.getElementById('legendItems');
+    el.innerHTML = sorted.map(([g,n])=>
+      '<div class="legend-item"><span class="legend-dot" style="background:'+colorFor(g)+';"></span>'+g+' ('+n+')</div>'
+    ).join('');
+  }
+
+  function updateGroupFilter(data){
+    const sel = document.getElementById('groupFilter');
+    const groups = [...new Set(data.map(d=> d.group || 'Not specified'))].sort((a,b)=> a.localeCompare(b,'en'));
+    sel.innerHTML = '<option value="">All groups</option>' + groups.map(g=>'<option value="'+g.replace(/"/g,'&quot;')+'">'+g+'</option>').join('');
+  }
+
+  function applyFilters(zoomToResults = true){
+    const q = document.getElementById('searchInput').value.trim().toLowerCase();
+    const grp = document.getElementById('groupFilter').value;
+    const visibleMarkers = [];
+
+    cluster.clearLayers();
+    allMarkers.forEach(m=>{
+      const d = m._meta;
+      const matchesGroup = !grp || (d.group||'Not specified') === grp;
+      const matchesQuery = !q || (d.farmer||'').toLowerCase().includes(q) || (d.place||'').toLowerCase().includes(q);
+      if(matchesGroup && matchesQuery){
+        cluster.addLayer(m);
+        visibleMarkers.push(m);
+      }
+    });
+
+    // Zoom automatiquement vers les points visibles.
+    // - Une groupe sélectionnée : zoom sur les points de cette groupe.
+    // - "All groups" : retour à l'étendue de toutes les données filtrées.
+    if(zoomToResults){
+      if(visibleMarkers.length === 1){
+        map.setView(visibleMarkers[0].getLatLng(), 14, { animate:true });
+      } else if(visibleMarkers.length > 1){
+        const bounds = L.featureGroup(visibleMarkers).getBounds();
+        map.fitBounds(bounds.pad(0.15), { animate:true, maxZoom:16 });
+      } else if(!grp && !q){
+        fitToMarkers();
+      }
+    }
+  }
+
+  function fitToMarkers(){
+    if(allMarkers.length){
+      const group = L.featureGroup(allMarkers);
+      map.fitBounds(group.getBounds().pad(0.15));
+    }
+  }
+
+  function loadData(data){
+    currentData = data;
+    const valid = renderMarkers(data);
+    fitToMarkers();
+    renderCharts(data);
+    return valid;
+  }
+
+  // ---- Tabs ----
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('#mapWrap, #chartsWrap').forEach(v=>v.classList.add('hidden-view'));
+      this.classList.add('active');
+      const target = document.getElementById(this.dataset.tab);
+      target.classList.remove('hidden-view');
+      if(this.dataset.tab === 'mapWrap' && map){
+        setTimeout(()=> map.invalidateSize(), 80);
+      }
+    });
+  });
+
+  // ---- Charts ----
+  const CHART_FONT = "'Tajawal', sans-serif";
+  let chartCount, chartArea, chartPie, chartAvgArea;
+
+  function groupStats(data){
+    const groups = {};
+    data.forEach(d=>{
+      const g = d.group || 'Not specified';
+      if(!groups[g]) groups[g] = { count:0, area:0, areaCount:0 };
+      groups[g].count++;
+      const a = typeof d.area === 'number' ? d.area : parseFloat(d.area);
+      if(!isNaN(a)){
+        groups[g].area += a;
+        groups[g].areaCount++;
+      }
+    });
+    return Object.entries(groups)
+      .map(([group, s])=>({
+        group,
+        count: s.count,
+        area: Math.round(s.area*100)/100,
+        avgArea: s.areaCount ? Math.round((s.area/s.areaCount)*100)/100 : 0
+      }))
+      .sort((a,b)=> b.count - a.count);
+  }
+
+  function destroyCharts(){
+    [chartCount, chartArea, chartPie, chartAvgArea].forEach(c=>{ if(c) c.destroy(); });
+  }
+
+  function renderCharts(data){
+    destroyCharts();
+    const empty = document.getElementById('chartsEmpty');
+    const content = document.getElementById('chartsContent');
+
+    if(!data || !data.length){
+      empty.classList.remove('hidden-view');
+      content.classList.add('hidden-view');
+      return;
+    }
+    empty.classList.add('hidden-view');
+    content.classList.remove('hidden-view');
+
+    const stats = groupStats(data);
+    const labels = stats.map(s=> s.group);
+    const counts = stats.map(s=> s.count);
+    const areas = stats.map(s=> s.area);
+    const avgAreas = stats.map(s=> s.avgArea);
+    const colors = labels.map(g=> colorFor(g));
+
+    const total = data.length;
+    const validCoords = data.filter(d=> typeof d.lat==='number' && typeof d.lon==='number' && !isNaN(d.lat) && !isNaN(d.lon)).length;
+    const totalArea = Math.round(stats.reduce((s,r)=> s + r.area, 0)*100)/100;
+    const areaCount = data.filter(d=>{
+      const a = typeof d.area === 'number' ? d.area : parseFloat(d.area);
+      return !isNaN(a);
+    }).length;
+    const avgArea = areaCount ? Math.round((totalArea/areaCount)*100)/100 : 0;
+
+    document.getElementById('kpiRow').innerHTML =
+      '<div class="kpi-card"><div class="kpi-label">Total points</div><div class="kpi-value">'+total+'</div><div class="kpi-sub">Valid coordinates: '+validCoords+'</div></div>'
+      + '<div class="kpi-card olive"><div class="kpi-label">Total area (ha)</div><div class="kpi-value">'+totalArea+'</div><div class="kpi-sub">Average area per point: '+avgArea+'</div></div>'
+      + '<div class="kpi-card"><div class="kpi-label">Number of groups/delegations</div><div class="kpi-value">'+labels.length+'</div><div class="kpi-sub">different groups</div></div>';
+
+    // Note: area is unavailable for some points — total and average area
+    // Calculated only from points with area data
+    const areaNoteEl = document.getElementById('areaNote');
+    const missingArea = total - areaCount;
+    areaNoteEl.textContent = missingArea > 0
+      ? '⚠️ Area is not specified for ' + missingArea + ' points out of ' + total + '. Total area and average area per point are calculated only from points with area data (' + areaCount + ' points).'
+      : '';
+
+    Chart.defaults.font.family = CHART_FONT;
+    Chart.defaults.color = '#6e6558';
+
+    chartCount = new Chart(document.getElementById('chartCount'), {
+      type: 'bar',
+      data: { labels, datasets: [{ label:'Number of points', data: counts, backgroundColor: colors, borderRadius:6, maxBarThickness:34 }] },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins: { legend:{ display:false }, tooltip:{ rtl:false, titleFont:{family:CHART_FONT}, bodyFont:{family:CHART_FONT} } },
+        scales: { x:{ ticks:{ font:{family:CHART_FONT}, maxRotation:55, minRotation:35 }, grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ precision:0 } } }
+      }
+    });
+
+    chartArea = new Chart(document.getElementById('chartArea'), {
+      type: 'bar',
+      data: { labels, datasets: [{ label:'Area (ha)', data: areas, backgroundColor: colors, borderRadius:6, maxBarThickness:34 }] },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins: { legend:{ display:false }, tooltip:{ rtl:false, titleFont:{family:CHART_FONT}, bodyFont:{family:CHART_FONT} } },
+        scales: { x:{ ticks:{ font:{family:CHART_FONT}, maxRotation:55, minRotation:35 }, grid:{ display:false } }, y:{ beginAtZero:true } }
+      }
+    });
+
+    chartPie = new Chart(document.getElementById('chartPie'), {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data: counts, backgroundColor: colors, borderColor:'#fffdf8', borderWidth:2 }] },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins: { legend:{ position:'bottom', rtl:false, labels:{ font:{size:11}, boxWidth:11 } }, tooltip:{ rtl:false } }
+      }
+    });
+
+    chartAvgArea = new Chart(document.getElementById('chartAvgArea'), {
+      type: 'bar',
+      data: { labels, datasets: [{ label:'Average area (ha)', data: avgAreas, backgroundColor: colors, borderRadius:6, maxBarThickness:34 }] },
+      options: {
+        indexAxis: 'y',
+        responsive:true, maintainAspectRatio:false,
+        plugins: { legend:{ display:false }, tooltip:{ rtl:false } },
+        scales: { x:{ beginAtZero:true }, y:{ grid:{ display:false } } }
+      }
+    });
+  }
+
+  // ---- Excel import ----
+  function normalizeHeader(h){ return String(h||'').trim(); }
+
+  function parseWorkbook(workbook){
+    let sheet = workbook.Sheets[SHEET_NAME] ? SHEET_NAME : workbook.SheetNames.find(n => workbook.Sheets[n]['!ref'] && XLSX.utils.sheet_to_json(workbook.Sheets[n], {header:1})[0] && XLSX.utils.sheet_to_json(workbook.Sheets[n], {header:1})[0].length >= 8);
+    if(!sheet) sheet = workbook.SheetNames[0];
+    const ws = workbook.Sheets[sheet];
+    const rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:true, defval:null });
+    if(!rows.length) throw new Error("The file is empty.");
+
+    const header = rows[0].map(normalizeHeader);
+    const missing = REQUIRED_HEADER.filter(h => !header.some(x => x === h.trim()));
+    if(missing.length){
+      throw new Error("File structure does not match. Missing columns: " + missing.join(', '));
+    }
+
+    const idx = REQUIRED_HEADER.map(h => header.findIndex(x => x === h.trim()));
+    const data = [];
+    for(let i=1;i<rows.length;i++){
+      const r = rows[i];
+      if(!r || r.every(c=>c===null || c==='')) continue;
+      const id = r[idx[0]];
+      if(id===null || id===undefined || id==='') continue;
+      data.push({
+        id: id,
+        source: r[idx[1]],
+        group: r[idx[2]],
+        ref: r[idx[3]],
+        farmer: r[idx[4]],
+        place: r[idx[5]],
+        code: r[idx[6]],
+        lat: typeof r[idx[7]] === 'number' ? r[idx[7]] : parseFloat(r[idx[7]]),
+        lon: typeof r[idx[8]] === 'number' ? r[idx[8]] : parseFloat(r[idx[8]]),
+        orig_system: r[idx[9]],
+        orig_coords: r[idx[10]],
+        area: r[idx[11]],
+        crop: r[idx[12]],
+        phone: r[idx[13]],
+        notes: r[idx[14]]
+      });
+    }
+    if(!data.length) throw new Error("No valid data rows were found.");
+    return data;
+  }
+
+  function handleFile(file, isInitial){
+    const reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        const wb = XLSX.read(e.target.result, { type:'array', cellDates:false });
+        const data = parseWorkbook(wb);
+        const valid = loadData(data);
+        if(isInitial){
+          document.getElementById('startOverlay').classList.add('hidden');
+        } else {
+          showToast('✅ Map updated: '+data.length+' points ('+valid+' with valid coordinates).', false);
+        }
+      }catch(err){
+        if(isInitial){
+          document.getElementById('startError').textContent = '⚠️ ' + err.message;
+        } else {
+          showToast('⚠️ '+ err.message, true);
+        }
+      }
+    };
+    reader.onerror = function(){
+      if(isInitial){
+        document.getElementById('startError').textContent = '⚠️ Unable to read the file.';
+      } else {
+        showToast('⚠️ Unable to read the file.', true);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  document.getElementById('fileInput').addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if(file) handleFile(file, false);
+    e.target.value = '';
+  });
+  document.getElementById('startFileInput').addEventListener('change', function(e){
+    const file = e.target.files[0];
+    document.getElementById('startError').textContent = '';
+    if(file) handleFile(file, true);
+    e.target.value = '';
+  });
+  document.getElementById('searchInput').addEventListener('input', () => applyFilters(true));
+  document.getElementById('groupFilter').addEventListener('change', () => applyFilters(true));
+
+  initMap();
+})();
+</script>
+</body>
+</html>
